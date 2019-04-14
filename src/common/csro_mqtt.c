@@ -70,7 +70,7 @@ static void mqtt_task(void *pvParameters)
     debug(IPSTR, IP2STR(&addr));
 
     esp_mqtt_client_config_t mqtt_cfg = {
-        .uri = "192.168.2.51",
+        .uri = "mqtt://192.168.2.51",
         .event_handle = mqtt_event_handler,
     };
     esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
