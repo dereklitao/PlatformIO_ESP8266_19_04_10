@@ -5,16 +5,20 @@
 
 void app_main(void)
 {
-    printf("\r\nHello PlatformIO\n");
-
+    nvs_handle handle;
+    uint8_t flag = 0;
     nvs_flash_init();
-
-    printf("\r\nHello github\r\n");
-
-    printf("\r\nHello github\r\n");
-
-    printf("\r\nHello github\r\n");
-
-    xTaskCreate(test_task, "test_task", 4096, NULL, 10, NULL);
-    xTaskCreate(csro_smart_config_task, "csro_smart_config_task", 4096, NULL, 10, NULL);
+    nvs_open("system", NVS_READONLY, &handle);
+    nvs_get_u32(handle, "power_count", &sysinfo.power_on_count);
+    nvs_set_u32(handle, "power_count", (sysinfo.power_on_count + 1));
+    nvs_get_u8(handle, "router", &flag);
+    nvs_close(handle);
+    if (flag == 1)
+    {
+        csro_start_mqtt();
+    }
+    else
+    {
+        csro_start_smart_config();
+    }
 }

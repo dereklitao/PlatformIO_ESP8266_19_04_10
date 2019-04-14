@@ -1,27 +1,8 @@
 #include "common.h"
 
-void csro_smart_config_task(void *pvParameters)
+csro_system sysinfo;
+csro_mqtt mqttinfo;
+
+void csro_system_get_info(void)
 {
-    static uint16_t count = 0;
-
-    for (;;)
-    {
-        vTaskDelay(1000 / portTICK_RATE_MS);
-        printf("This is the %d smartconfig!\r\n", count);
-        count++;
-    }
-    vTaskDelete(NULL);
-}
-
-void test_task(void *pvParameters)
-{
-    static uint16_t count = 0;
-
-    for (;;)
-    {
-        vTaskDelay(1000 / portTICK_RATE_MS);
-        printf("This is the %d print!\r\n", count);
-        count++;
-    }
-    vTaskDelete(NULL);
 }
