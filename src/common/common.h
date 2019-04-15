@@ -11,6 +11,13 @@
 #include "netdb.h"
 #include "mqtt\esp-mqtt\include\mqtt_client.h"
 
+#define NLIGHT 3
+// #define     NLIGHT               3
+// #define     DLIGHT               1
+// #define     MOTOR                2
+// #define     AIR_MONITOR
+// #define     AIR_SYSTEM
+
 #define DEBUG
 #ifdef DEBUG
 #define debug(format, ...) printf(format, ##__VA_ARGS__)
@@ -58,9 +65,8 @@ typedef struct
     char sub_topic_hass[MQTT_TOPIC_LENGTH];
     char sub_topic_group[MQTT_TOPIC_LENGTH];
     char pub_topic[MQTT_TOPIC_LENGTH];
-    uint8_t send_buf[MQTT_BUFFER_LENGTH];
-    uint8_t recv_buf[MQTT_BUFFER_LENGTH];
     char content[MQTT_BUFFER_LENGTH];
+    char broker[50];
     char prefix[50];
     uint16_t interval;
 } csro_mqtt;
@@ -69,6 +75,7 @@ extern csro_system sysinfo;
 extern csro_mqtt mqttinfo;
 
 //common.c
+void csro_system_get_info(void);
 
 //csro_start_config.c
 void csro_start_smart_config(void);
