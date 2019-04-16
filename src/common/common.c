@@ -43,6 +43,7 @@ void csro_system_get_info(void)
     sprintf(sysinfo.host_name, "CSRO_%s", sysinfo.mac_str);
 
     sprintf(mqttinfo.id, "csro/%s", sysinfo.mac_str);
+    system_print_device_type();
     sprintf(mqttinfo.name, "csro/%s/%s", sysinfo.mac_str, sysinfo.dev_type);
     sprintf(mqttinfo.pass, PASSSTR_FORMAT, sysinfo.mac[1], sysinfo.mac[3], sysinfo.mac[5], sysinfo.mac[0], sysinfo.mac[2], sysinfo.mac[4], sysinfo.mac[5], sysinfo.mac[3], sysinfo.mac[1], sysinfo.mac[4], sysinfo.mac[2], sysinfo.mac[0]);
     debug("id = %s.\nname = %s.\npass = %s.\n", mqttinfo.id, mqttinfo.name, mqttinfo.pass);

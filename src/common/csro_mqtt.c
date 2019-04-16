@@ -2,8 +2,23 @@
 #include "mdns.h"
 #include "esp_log.h"
 
+#define LIGHT_PAYLOAD "{\"~\" : \"csro/%s/nlight3\", \"name\" : \"nlight3_%d\", \"stat_t\" : \"~/state\", \"stat_val_tpl\" : \"{{value_json.state[%d]}}\", \"cmd_t\" : \"~/set/%d\", \"pl_on\" : \"on\", \"pl_off\" : \"off\"}"
+
 static EventGroupHandle_t wifi_event_group;
 TaskHandle_t MQTT_TASK;
+
+esp_mqtt_client_handle_t mqtt_client;
+
+static void publish_hass_discovery_config(void)
+{
+    sprintf(mqttinfo.pub_topic, "csro/light/%s_nlight3_%d/config", sysinfo.mac_str, 1);
+    sprintf(mqttinfo.content, LIGHT_PAYLOAD, sysinfo.mac_str, 1, 0, 1);
+    if (csro_client_is_idle(mqtt_client))
+    {
+        debug("pub_config\n");
+        esp_mqtt_client_publish(mqtt_client, mqttinfo.pub_topic, mqttinfo.content, 0, 1, 0);
+    }
+}
 
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 {
@@ -11,18 +26,8 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
     int msg_id;
     if (event->event_id == MQTT_EVENT_CONNECTED)
     {
+        publish_hass_discovery_config();
         debug("MQTT_EVENT_CONNECTED\n");
-        msg_id = esp_mqtt_client_publish(client, "/topic/qos1", "data_3", 0, 1, 0);
-        debug("sent publish successful, msg_id=%d\n", msg_id);
-
-        msg_id = esp_mqtt_client_subscribe(client, "/topic/qos0", 0);
-        debug("sent subscribe successful, msg_id=%d\n", msg_id);
-
-        msg_id = esp_mqtt_client_subscribe(client, "/topic/qos1", 1);
-        debug("sent subscribe successful, msg_id=%d\n", msg_id);
-
-        msg_id = esp_mqtt_client_unsubscribe(client, "/topic/qos1");
-        debug("sent unsubscribe successful, msg_id=%d\n", msg_id);
     }
     else if (event->event_id == MQTT_EVENT_DISCONNECTED)
     {
@@ -30,13 +35,9 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
     }
     else if (event->event_id == MQTT_EVENT_SUBSCRIBED)
     {
-        debug("MQTT_EVENT_SUBSCRIBED, msg_id=%d\n", event->msg_id);
-        msg_id = esp_mqtt_client_publish(client, "/topic/qos0", "data", 0, 0, 0);
-        debug("sent publish successful, msg_id=%d\n", msg_id);
     }
     else if (event->event_id == MQTT_EVENT_UNSUBSCRIBED)
     {
-        debug("MQTT_EVENT_UNSUBSCRIBED, msg_id=%d\n", event->msg_id);
     }
     else if (event->event_id == MQTT_EVENT_PUBLISHED)
     {
@@ -44,7 +45,6 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
     }
     else if (event->event_id == MQTT_EVENT_DATA)
     {
-        debug("MQTT_EVENT_DATA\n");
         printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
         printf("DATA=%.*s\r\n", event->data_len, event->data);
     }
@@ -60,14 +60,15 @@ static void mqtt_task(void *pvParameters)
     static int count = 0;
     struct ip4_addr addr;
     addr.addr = 0;
+
     mdns_init();
     esp_err_t err = mdns_query_a("csro-home-server", 3000, &addr);
     while (err != 0)
     {
         err = mdns_query_a("csro-home-server", 3000, &addr);
     }
-    sprintf(mqttinfo.broker, "mqtt://%d.%d.%d.%d:1883", ip4_addr1_16(&addr), ip4_addr2_16(&addr), ip4_addr3_16(&addr), ip4_addr4_16(&addr));
-    debug("%s\n", mqttinfo.broker);
+    sprintf(mqttinfo.broker, "mqtt://%d.%d.%d.%d", ip4_addr1_16(&addr), ip4_addr2_16(&addr), ip4_addr3_16(&addr), ip4_addr4_16(&addr));
+
     esp_mqtt_client_config_t mqtt_cfg = {
         .event_handle = mqtt_event_handler,
         .client_id = mqttinfo.id,
@@ -76,18 +77,21 @@ static void mqtt_task(void *pvParameters)
         .uri = mqttinfo.broker,
         .keepalive = 60,
     };
-    esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
-    esp_mqtt_client_start(client);
+    mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
+    esp_mqtt_client_start(mqtt_client);
+
+    char msg[30];
 
     while (1)
     {
         //printf("Mqtt task count = %d\n", count);
-        if (client->state == 2)
+        vTaskDelay(200 / portTICK_PERIOD_MS);
+        if (csro_client_is_idle(mqtt_client))
         {
-            esp_mqtt_client_publish(client, "esp-mqtt/test/", "data_3", 0, 1, 0);
+            sprintf(msg, "msg count = %d\n", count);
+            esp_mqtt_client_publish(mqtt_client, "esp-mqtt/test/", msg, 0, 0, 0);
+            count++;
         }
-        vTaskDelay(1 / portTICK_PERIOD_MS);
-        count++;
     }
     vTaskDelete(NULL);
 }
