@@ -10,6 +10,8 @@
     "socket.h": "c",
     "mqtt_client.h": "c",
     "mqtt_config.h": "c",
-    "ssl_crypto.h": "c"
+    "ssl_crypto.h": "c",
+    "csro_device.h": "c",
+    "csro_common.h": "c"
   }
 }

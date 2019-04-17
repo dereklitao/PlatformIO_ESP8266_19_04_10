@@ -1,24 +1,11 @@
-#include "common.h"
+#include "csro_common.h"
 #include "mdns.h"
 #include "esp_log.h"
-
-#define LIGHT_PAYLOAD "{\"~\" : \"csro/%s/nlight3\", \"name\" : \"nlight3_%d\", \"stat_t\" : \"~/state\", \"stat_val_tpl\" : \"{{value_json.state[%d]}}\", \"cmd_t\" : \"~/set/%d\", \"pl_on\" : \"on\", \"pl_off\" : \"off\"}"
+#include "./device/csro_device.h"
 
 static EventGroupHandle_t wifi_event_group;
 TaskHandle_t MQTT_TASK;
-
 esp_mqtt_client_handle_t mqtt_client;
-
-static void publish_hass_discovery_config(void)
-{
-    sprintf(mqttinfo.pub_topic, "csro/light/%s_nlight3_%d/config", sysinfo.mac_str, 1);
-    sprintf(mqttinfo.content, LIGHT_PAYLOAD, sysinfo.mac_str, 1, 0, 1);
-    if (csro_client_is_idle(mqtt_client))
-    {
-        debug("pub_config\n");
-        esp_mqtt_client_publish(mqtt_client, mqttinfo.pub_topic, mqttinfo.content, 0, 1, 0);
-    }
-}
 
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 {
@@ -26,38 +13,18 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
     int msg_id;
     if (event->event_id == MQTT_EVENT_CONNECTED)
     {
-        publish_hass_discovery_config();
-        debug("MQTT_EVENT_CONNECTED\n");
-    }
-    else if (event->event_id == MQTT_EVENT_DISCONNECTED)
-    {
-        debug("MQTT_EVENT_DISCONNECTED\n");
-    }
-    else if (event->event_id == MQTT_EVENT_SUBSCRIBED)
-    {
-    }
-    else if (event->event_id == MQTT_EVENT_UNSUBSCRIBED)
-    {
-    }
-    else if (event->event_id == MQTT_EVENT_PUBLISHED)
-    {
-        debug("MQTT_EVENT_PUBLISHED, msg_id=%d\n", event->msg_id);
+        debug("Mqtt Connected!\n");
+        csro_device_on_connect(client);
     }
     else if (event->event_id == MQTT_EVENT_DATA)
     {
-        printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-        printf("DATA=%.*s\r\n", event->data_len, event->data);
-    }
-    else if (event->event_id == MQTT_EVENT_ERROR)
-    {
-        debug("MQTT_EVENT_ERROR\n");
+        csro_device_on_message(event);
     }
     return ESP_OK;
 }
 
 static void mqtt_task(void *pvParameters)
 {
-    static int count = 0;
     struct ip4_addr addr;
     addr.addr = 0;
 
@@ -68,6 +35,7 @@ static void mqtt_task(void *pvParameters)
         err = mdns_query_a("csro-home-server", 3000, &addr);
     }
     sprintf(mqttinfo.broker, "mqtt://%d.%d.%d.%d", ip4_addr1_16(&addr), ip4_addr2_16(&addr), ip4_addr3_16(&addr), ip4_addr4_16(&addr));
+    sprintf(mqttinfo.lwt_topic, "csro/%s/%s/available", sysinfo.mac_str, sysinfo.dev_type);
 
     esp_mqtt_client_config_t mqtt_cfg = {
         .event_handle = mqtt_event_handler,
@@ -76,21 +44,18 @@ static void mqtt_task(void *pvParameters)
         .password = mqttinfo.pass,
         .uri = mqttinfo.broker,
         .keepalive = 60,
+        .lwt_topic = mqttinfo.lwt_topic,
+        .lwt_msg = "offline",
+        .lwt_retain = 1,
+        .lwt_qos = 1,
     };
     mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_start(mqtt_client);
-
-    char msg[30];
-
-    while (1)
+    while (true)
     {
-        //printf("Mqtt task count = %d\n", count);
-        vTaskDelay(200 / portTICK_PERIOD_MS);
-        if (csro_client_is_idle(mqtt_client))
+        if (xSemaphoreTake(state_msg_semaphore, portMAX_DELAY) == pdTRUE)
         {
-            sprintf(msg, "msg count = %d\n", count);
-            esp_mqtt_client_publish(mqtt_client, "esp-mqtt/test/", msg, 0, 0, 0);
-            count++;
+            esp_mqtt_client_publish(mqtt_client, mqttinfo.pub_topic, mqttinfo.content, 0, 0, 1);
         }
     }
     vTaskDelete(NULL);
@@ -126,6 +91,10 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
 void csro_start_mqtt(void)
 {
     csro_system_get_info();
+
+    state_msg_semaphore = xSemaphoreCreateBinary();
+    xSemaphoreTake(state_msg_semaphore, 10);
+
     wifi_event_group = xEventGroupCreate();
     tcpip_adapter_init();
     esp_event_loop_init(wifi_event_handler, NULL);

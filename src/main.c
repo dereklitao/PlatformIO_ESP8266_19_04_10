@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include "esp_system.h"
-#include "common/common.h"
+#include "common/csro_common.h"
 
 void app_main(void)
 {
