@@ -55,7 +55,9 @@ static void mqtt_task(void *pvParameters)
     {
         if (xSemaphoreTake(state_msg_semaphore, portMAX_DELAY) == pdTRUE)
         {
+            csro_update_nlight_state();
             esp_mqtt_client_publish(mqtt_client, mqttinfo.pub_topic, mqttinfo.content, 0, 0, 1);
+            vTaskDelay(100 / portTICK_RATE_MS);
         }
     }
     vTaskDelete(NULL);

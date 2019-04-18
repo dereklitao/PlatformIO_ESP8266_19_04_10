@@ -7,7 +7,7 @@
 
 int light_state[3];
 
-static void update_nlight_state(void)
+void csro_update_nlight_state(void)
 {
     cJSON *state_json = cJSON_CreateObject();
     cJSON_AddItemToObject(state_json, "state", cJSON_CreateIntArray(light_state, 3));
@@ -15,9 +15,7 @@ static void update_nlight_state(void)
     strcpy(mqttinfo.content, out);
     free(out);
     cJSON_Delete(state_json);
-
     sprintf(mqttinfo.pub_topic, "csro/%s/%s/state", sysinfo.mac_str, sysinfo.dev_type);
-    xSemaphoreGive(state_msg_semaphore);
 }
 
 void csro_nlight_on_connect(esp_mqtt_client_handle_t client)
@@ -33,13 +31,13 @@ void csro_nlight_on_connect(esp_mqtt_client_handle_t client)
     }
     sprintf(mqttinfo.pub_topic, "csro/%s/%s/available", sysinfo.mac_str, sysinfo.dev_type);
     esp_mqtt_client_publish(client, mqttinfo.pub_topic, "online", 0, 1, 1);
-    update_nlight_state();
+    xSemaphoreGive(state_msg_semaphore);
 }
 
 void csro_nlight_on_message(esp_mqtt_event_handle_t event)
 {
     bool update = false;
-    char topic[100];
+    char topic[50];
     for (size_t i = 1; i < NLIGHT + 1; i++)
     {
         sprintf(topic, "csro/%s/%s/set/%d", sysinfo.mac_str, sysinfo.dev_type, i);
@@ -59,7 +57,7 @@ void csro_nlight_on_message(esp_mqtt_event_handle_t event)
     }
     if (update)
     {
-        update_nlight_state();
+        xSemaphoreGive(state_msg_semaphore);
     }
 }
 
