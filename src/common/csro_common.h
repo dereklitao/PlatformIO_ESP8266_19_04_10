@@ -59,6 +59,11 @@ typedef struct
     uint32_t power_on_count;
     uint32_t wifi_conn_count;
     uint32_t serv_conn_count;
+    bool time_sync;
+    time_t start;
+    time_t now;
+    struct tm timeinfo;
+    char time_str[64];
 } csro_system;
 
 typedef struct

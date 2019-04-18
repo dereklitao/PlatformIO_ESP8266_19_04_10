@@ -7,6 +7,53 @@ static EventGroupHandle_t wifi_event_group;
 TaskHandle_t MQTT_TASK;
 esp_mqtt_client_handle_t mqtt_client;
 
+static void obtain_mqtt_server(void)
+{
+    struct ip4_addr addr;
+    addr.addr = 0;
+    mdns_init();
+    esp_err_t err = mdns_query_a("csro-home-server", 3000, &addr);
+    while (err != 0)
+    {
+        err = mdns_query_a("csro-home-server", 3000, &addr);
+    }
+    sprintf(mqttinfo.broker, "mqtt://%d.%d.%d.%d", ip4_addr1_16(&addr), ip4_addr2_16(&addr), ip4_addr3_16(&addr), ip4_addr4_16(&addr));
+    sprintf(mqttinfo.lwt_topic, "csro/%s/%s/available", sysinfo.mac_str, sysinfo.dev_type);
+}
+
+static void set_sntp(void)
+{
+    sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    sntp_setservername(0, "pool.ntp.org");
+    sntp_init();
+    setenv("TZ", "CST-8", 1);
+    tzset();
+}
+
+static void timer_task(void *pvParameters)
+{
+    static int count = 0;
+    while (true)
+    {
+        vTaskDelay(1000 / portTICK_RATE_MS);
+        time(&sysinfo.now);
+        localtime_r(&sysinfo.now, &sysinfo.timeinfo);
+        strftime(sysinfo.time_str, sizeof(sysinfo.time_str), "%Y-%m-%d %H:%M:%S", &sysinfo.timeinfo);
+        if (sysinfo.timeinfo.tm_year < (2016 - 1900))
+        {
+            count++;
+        }
+        else
+        {
+            if (sysinfo.time_sync == false)
+            {
+                sysinfo.start = sysinfo.now - count;
+                sysinfo.time_sync = true;
+            }
+        }
+    }
+}
+
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 {
     if (event->event_id == MQTT_EVENT_CONNECTED)
@@ -22,26 +69,8 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 
 static void mqtt_task(void *pvParameters)
 {
-    time_t now = 0;
-    struct tm timeinfo = {0};
-    struct ip4_addr addr;
-    addr.addr = 0;
-
-    sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    sntp_setservername(0, "pool.ntp.org");
-    sntp_init();
-    setenv("TZ", "CST-8", 1);
-    tzset();
-
-    mdns_init();
-    esp_err_t err = mdns_query_a("csro-home-server", 3000, &addr);
-    while (err != 0)
-    {
-        err = mdns_query_a("csro-home-server", 3000, &addr);
-    }
-    sprintf(mqttinfo.broker, "mqtt://%d.%d.%d.%d", ip4_addr1_16(&addr), ip4_addr2_16(&addr), ip4_addr3_16(&addr), ip4_addr4_16(&addr));
-    sprintf(mqttinfo.lwt_topic, "csro/%s/%s/available", sysinfo.mac_str, sysinfo.dev_type);
-
+    set_sntp();
+    obtain_mqtt_server();
     esp_mqtt_client_config_t mqtt_cfg = {
         .event_handle = mqtt_event_handler,
         .client_id = mqttinfo.id,
@@ -56,15 +85,12 @@ static void mqtt_task(void *pvParameters)
     };
     mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_start(mqtt_client);
-    char strftime_buf[64];
+
     while (true)
     {
-        time(&now);
-        localtime_r(&now, &timeinfo);
-        if (timeinfo.tm_year >= (2016 - 1900))
+        if (sysinfo.timeinfo.tm_year >= (2016 - 1900))
         {
-            strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-            debug("Free heap size: %d, The current date/time in Shanghai is: %s\n", esp_get_free_heap_size(), strftime_buf);
+            debug("Free heap: %d, time is: %s, run %d seconds\n", esp_get_free_heap_size(), sysinfo.time_str, (int)(sysinfo.now - sysinfo.start));
         }
         else
         {
@@ -104,6 +130,7 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
 
 void csro_start_mqtt(void)
 {
+    xTaskCreate(timer_task, "timer_task", 2048, NULL, 6, NULL);
     csro_system_get_info();
     wifi_event_group = xEventGroupCreate();
     tcpip_adapter_init();
