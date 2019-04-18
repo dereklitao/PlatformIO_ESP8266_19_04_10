@@ -1,7 +1,5 @@
 #include "csro_device.h"
 
-SemaphoreHandle_t state_msg_semaphore;
-
 void csro_device_on_connect(esp_mqtt_client_handle_t client)
 {
 #ifdef NLIGHT

@@ -9,12 +9,9 @@ esp_mqtt_client_handle_t mqtt_client;
 
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 {
-    esp_mqtt_client_handle_t client = event->client;
-    int msg_id;
     if (event->event_id == MQTT_EVENT_CONNECTED)
     {
-        debug("Mqtt Connected!\n");
-        csro_device_on_connect(client);
+        csro_device_on_connect(event->client);
     }
     else if (event->event_id == MQTT_EVENT_DATA)
     {
@@ -25,8 +22,16 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 
 static void mqtt_task(void *pvParameters)
 {
+    time_t now = 0;
+    struct tm timeinfo = {0};
     struct ip4_addr addr;
     addr.addr = 0;
+
+    sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    sntp_setservername(0, "pool.ntp.org");
+    sntp_init();
+    setenv("TZ", "CST-8", 1);
+    tzset();
 
     mdns_init();
     esp_err_t err = mdns_query_a("csro-home-server", 3000, &addr);
@@ -51,14 +56,21 @@ static void mqtt_task(void *pvParameters)
     };
     mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_start(mqtt_client);
+    char strftime_buf[64];
     while (true)
     {
-        if (xSemaphoreTake(state_msg_semaphore, portMAX_DELAY) == pdTRUE)
+        time(&now);
+        localtime_r(&now, &timeinfo);
+        if (timeinfo.tm_year >= (2016 - 1900))
         {
-            csro_update_nlight_state();
-            esp_mqtt_client_publish(mqtt_client, mqttinfo.pub_topic, mqttinfo.content, 0, 0, 1);
-            vTaskDelay(100 / portTICK_RATE_MS);
+            strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+            debug("Free heap size: %d, The current date/time in Shanghai is: %s\n", esp_get_free_heap_size(), strftime_buf);
         }
+        else
+        {
+            debug("Free heap size: %d\n", esp_get_free_heap_size());
+        }
+        vTaskDelay(1000 / portTICK_RATE_MS);
     }
     vTaskDelete(NULL);
 }
@@ -93,10 +105,6 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
 void csro_start_mqtt(void)
 {
     csro_system_get_info();
-
-    state_msg_semaphore = xSemaphoreCreateBinary();
-    xSemaphoreTake(state_msg_semaphore, 10);
-
     wifi_event_group = xEventGroupCreate();
     tcpip_adapter_init();
     esp_event_loop_init(wifi_event_handler, NULL);

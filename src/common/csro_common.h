@@ -13,7 +13,8 @@
 #include "sys\socket.h"
 #include "netdb.h"
 #include "mqtt\esp-mqtt\include\mqtt_client.h"
-#include "semphr.h"
+#include "sntp\sntp.h"
+#include "time.h"
 
 #define NLIGHT 3
 // #define     NLIGHT               3
@@ -76,6 +77,7 @@ typedef struct
 
 extern csro_system sysinfo;
 extern csro_mqtt mqttinfo;
+extern esp_mqtt_client_handle_t mqtt_client;
 
 //common.c
 void csro_system_get_info(void);
