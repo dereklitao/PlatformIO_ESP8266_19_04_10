@@ -2,31 +2,40 @@
 
 #ifdef AIR_MONITOR
 
+#define WIFI_LED_R 5
+#define WIFI_LED_G 4
+#define WIFI_LED_B 10
+#define AQI_LED_R 12
+#define AQI_LED_G 14
+#define AQI_LED_B 13
+#define FAN_PIN 15
+#define BTN_PIN 0
+
 #define GPIO_OUTPUT_IO_0 10
 #define GPIO_OUTPUT_PIN_SEL 1ULL << GPIO_OUTPUT_IO_0
+
+const uint32_t pin_num[7] = {WIFI_LED_R, WIFI_LED_G, WIFI_LED_B, AQI_LED_R, AQI_LED_G, AQI_LED_B, FAN_PIN};
+uint32_t duties[7] = {0, 0, 0, 0, 0, 0, 300};
+int16_t phase[7] = {0, 0, 0, 0, 0, 0, 0};
 
 static void gpio_task_example(void *arg)
 {
     static int count = 0;
     while (true)
     {
-        gpio_set_level(GPIO_OUTPUT_IO_0, count % 2);
-        debug("pin10 = %d\n", count % 2);
-        count++;
-        vTaskDelay(1000 / portTICK_RATE_MS);
+        count = (count + 1) % 500;
+        vTaskDelay(10 / portTICK_RATE_MS);
+        pwm_set_duty(0, count);
+        pwm_set_duty(3, count);
+        pwm_start();
     }
 }
 
 void csro_airmon_init(void)
 {
-    gpio_config_t io_conf;
-    io_conf.intr_type = GPIO_INTR_DISABLE;
-    io_conf.mode = GPIO_MODE_OUTPUT;
-    io_conf.pin_bit_mask = GPIO_OUTPUT_PIN_SEL;
-    io_conf.pull_down_en = 0;
-    io_conf.pull_up_en = 1;
-
-    gpio_config(&io_conf);
+    pwm_init(500, duties, 7, pin_num);
+    pwm_set_phases(phase);
+    pwm_start();
     xTaskCreate(gpio_task_example, "gpio_task_example", 2048, NULL, 10, NULL);
 }
 

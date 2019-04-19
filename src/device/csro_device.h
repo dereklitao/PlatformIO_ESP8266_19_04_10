@@ -2,8 +2,8 @@
 #define CSRO_DEVICE_H_
 
 #include "./common/csro_common.h"
-#include "cJSON.h"
 #include "./device/csro_device.h"
+#include "cJSON.h"
 
 //csro_device.c
 void csro_device_init(void);

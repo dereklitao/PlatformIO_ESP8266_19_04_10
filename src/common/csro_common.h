@@ -7,6 +7,7 @@
 #include "esp_event_loop.h"
 #include "esp_wifi.h"
 #include "gpio.h"
+#include "pwm.h"
 #include "esp_smartconfig.h"
 #include "string.h"
 #include "nvs_flash.h"
