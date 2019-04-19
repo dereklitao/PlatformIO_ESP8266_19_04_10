@@ -2,6 +2,7 @@
 
 #include "esp_system.h"
 #include "common/csro_common.h"
+#include "device/csro_device.h"
 
 void app_main(void)
 {
@@ -14,6 +15,8 @@ void app_main(void)
     nvs_get_u8(handle, "router", &flag);
     nvs_commit(handle);
     nvs_close(handle);
+
+    csro_device_init();
 
     debug("Power Count = %d\n", sysinfo.power_on_count);
 

@@ -1,7 +1,6 @@
 #include "csro_common.h"
 #include "mdns.h"
 #include "esp_log.h"
-#include "./device/csro_device.h"
 
 static EventGroupHandle_t wifi_event_group;
 TaskHandle_t MQTT_TASK;

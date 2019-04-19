@@ -14,7 +14,7 @@ static void system_print_device_type(void)
     sprintf(sysinfo.dev_type, "dlight%d", DLIGHT);
 #elif defined MOTOR
     sprintf(sysinfo.dev_type, "motor%d", MOTOR);
-#elif defined AQI_MONITOR
+#elif defined AIR_MONITOR
     sprintf(sysinfo.dev_type, "airmon");
 #elif defined AIR_SYSTEM
     sprintf(sysinfo.dev_type, "airsys");

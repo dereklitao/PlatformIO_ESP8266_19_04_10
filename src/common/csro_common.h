@@ -6,6 +6,7 @@
 #include "event_groups.h"
 #include "esp_event_loop.h"
 #include "esp_wifi.h"
+#include "gpio.h"
 #include "esp_smartconfig.h"
 #include "string.h"
 #include "nvs_flash.h"
@@ -16,7 +17,8 @@
 #include "sntp\sntp.h"
 #include "time.h"
 
-#define NLIGHT 3
+#define AIR_MONITOR
+
 // #define     NLIGHT               3
 // #define     DLIGHT               1
 // #define     MOTOR                2
