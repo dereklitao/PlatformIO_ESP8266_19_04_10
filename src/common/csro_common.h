@@ -7,6 +7,7 @@
 #include "esp_event_loop.h"
 #include "esp_wifi.h"
 #include "gpio.h"
+#include "uart.h"
 #include "pwm.h"
 #include "esp_smartconfig.h"
 #include "string.h"
@@ -51,6 +52,7 @@ typedef enum
 typedef struct
 {
     csro_status status;
+    uint8_t router_flag;
     char router_ssid[50];
     char router_pass[50];
     uint8_t mac[6];
