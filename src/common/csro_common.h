@@ -19,7 +19,7 @@
 #include "sntp\sntp.h"
 #include "time.h"
 
-#define AIR_MONITOR
+#define DLIGHT
 
 // #define     NLIGHT               3
 // #define     DLIGHT               1
