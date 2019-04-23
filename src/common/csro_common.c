@@ -11,7 +11,7 @@ static void system_print_device_type(void)
 #ifdef NLIGHT
     sprintf(sysinfo.dev_type, "nlight%d", NLIGHT);
 #elif defined DLIGHT
-    sprintf(sysinfo.dev_type, "dlight%d", DLIGHT);
+    sprintf(sysinfo.dev_type, "dlight");
 #elif defined MOTOR
     sprintf(sysinfo.dev_type, "motor%d", MOTOR);
 #elif defined AIR_MONITOR

@@ -19,7 +19,7 @@
 #include "sntp\sntp.h"
 #include "time.h"
 
-#define DLIGHT
+#define DLIGHT 2
 
 // #define     NLIGHT               3
 // #define     DLIGHT               1

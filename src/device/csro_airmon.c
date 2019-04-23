@@ -13,6 +13,9 @@
 #define BRIGHTNESS 5
 #define PWM_PERIOD 2550
 
+#define CFG_AIRMON_TOPIC "csro/sensor/%s_%s_%s/config" //
+#define CFG_AIRMON_PAYLOAD "{\"~\":\"csro/%s/%s\",\"dev_cla\":\"%s\",\"unit_of_meas\":\"%s\",\"name\":\"%s_%s_%s\",\"avty_t\":\"~/available\",\"pl_avail\":\"online\",\"pl_not_avail\":\"offline\",\"stat_t\":\"~/state\",\"val_tpl\":\"{{value_json.%s | round(%d)}}\", \"icon\":\"%s\",\"qos\":1}"
+
 typedef enum
 {
     PURPLE = 0,  //red=128, green=0; 	blue=128;
@@ -290,9 +293,6 @@ void csro_airmon_init(void)
     pwm_start();
     xTaskCreate(led_task, "led_task", 2048, NULL, 9, NULL);
 }
-
-#define CFG_AIRMON_TOPIC "csro/sensor/%s_%s_%s/config" //
-#define CFG_AIRMON_PAYLOAD "{\"~\":\"csro/%s/%s\",\"dev_cla\":\"%s\",\"unit_of_meas\":\"%s\",\"name\":\"%s_%s_%s\",\"avty_t\":\"~/available\",\"pl_avail\":\"online\",\"pl_not_avail\":\"offline\",\"stat_t\":\"~/state\",\"val_tpl\":\"{{value_json.%s | round(%d)}}\", \"icon\":\"%s\",\"qos\":1}"
 
 char *classlist[6] = {"temperature", "humidity", "pressure", "pressure", "pressure", "pressure"};
 char *itemlist[6] = {"temperature", "humidity", "hcho", "pm1dot0", "pm2dot5", "pm10"};
