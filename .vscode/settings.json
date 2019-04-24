@@ -12,6 +12,8 @@
     "mqtt_config.h": "c",
     "ssl_crypto.h": "c",
     "csro_device.h": "c",
-    "csro_common.h": "c"
+    "csro_common.h": "c",
+    "spiffs_nucleus.h": "c",
+    "spiffs.h": "c"
   }
 }
