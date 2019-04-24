@@ -89,6 +89,10 @@ void csro_dlight_on_message(esp_mqtt_event_handle_t event)
             else if (strncmp("1", event->data, event->data_len) == 0)
             {
                 csro_dlight[i - 1].state = 1;
+                if (csro_dlight[i - 1].brightness == 0)
+                {
+                    csro_dlight[i - 1].brightness == 255;
+                }
                 pwm_set_duty(i + 2, 10 * csro_dlight[i - 1].brightness);
                 pwm_start();
                 update = true;

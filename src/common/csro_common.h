@@ -19,10 +19,11 @@
 #include "sntp\sntp.h"
 #include "time.h"
 
-#define DLIGHT 2
+#define RGBLIGHT 1
 
 // #define     NLIGHT               3
 // #define     DLIGHT               1
+// #define     RGBLIGHT             1
 // #define     MOTOR                2
 // #define     AIR_MONITOR
 // #define     AIR_SYSTEM
