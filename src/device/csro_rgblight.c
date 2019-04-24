@@ -24,9 +24,9 @@ typedef struct
 } csro_rgb_light;
 
 csro_rgb_light rgb_light;
-const uint32_t rgb_pin = {RGBLIGHT_RED_PIN, RGBLIGHT_GREEN_PIN, RGBLIGHT_BLUE_PIN};
-uint32_t rgb_duties = {0, 0, 0};
-uint32_t rgb_phases = {0, 0, 0};
+const uint32_t rgb_pin[3] = {RGBLIGHT_RED_PIN, RGBLIGHT_GREEN_PIN, RGBLIGHT_BLUE_PIN};
+uint32_t rgb_duties[3] = {0, 0, 0};
+int16_t rgb_phases[3] = {0, 0, 0};
 
 void csro_rgblight_init(void)
 {
