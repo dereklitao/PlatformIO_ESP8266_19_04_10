@@ -51,6 +51,7 @@ static void timer_task(void *pvParameters)
             }
         }
     }
+    vTaskDelete(NULL);
 }
 
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
@@ -111,7 +112,7 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
     {
         if (MQTT_TASK == NULL)
         {
-            xTaskCreate(mqtt_task, "mqtt_task", 4096, NULL, 6, &MQTT_TASK);
+            xTaskCreate(mqtt_task, "mqtt_task", 4096, NULL, 8, &MQTT_TASK);
         }
     }
     else if (event->event_id == SYSTEM_EVENT_STA_DISCONNECTED)
