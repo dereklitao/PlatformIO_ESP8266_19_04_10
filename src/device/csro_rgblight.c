@@ -15,12 +15,10 @@ typedef struct
     uint8_t state;
     uint8_t bright;
     uint8_t bright_set;
+    uint8_t bright_last;
     uint8_t red;
-    uint8_t red_set;
     uint8_t green;
-    uint8_t green_set;
     uint8_t blue;
-    uint8_t blue_set;
 } csro_rgb_light;
 
 csro_rgb_light rgb_light;
