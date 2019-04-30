@@ -11,9 +11,7 @@ typedef struct
 {
     uint8_t state;
     uint8_t bright;
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
+    uint8_t rgb[3];
 } csro_rgb_light;
 
 csro_rgb_light rgb_light;
@@ -30,9 +28,9 @@ static void rgblight_update_state(void)
     cJSON_AddItemToObject(state_json, "state", rgbstate = cJSON_CreateObject());
     cJSON_AddNumberToObject(rgbstate, "on", rgb_light.state);
     cJSON_AddNumberToObject(rgbstate, "bright", rgb_light.bright);
-    rgb_value[0] = rgb_light.red;
-    rgb_value[1] = rgb_light.green;
-    rgb_value[2] = rgb_light.blue;
+    rgb_value[0] = rgb_light.rgb[0];
+    rgb_value[1] = rgb_light.rgb[1];
+    rgb_value[2] = rgb_light.rgb[2];
     cJSON_AddItemToObject(rgbstate, "rgb", cJSON_CreateIntArray(rgb_value, 3));
     cJSON_AddStringToObject(state_json, "time", sysinfo.time_str);
     cJSON_AddNumberToObject(state_json, "run", (int)(sysinfo.now - sysinfo.start));
@@ -50,11 +48,60 @@ static void rgb_light_pwm_task(void *pvParameters)
     while (true)
     {
         bool update_pwm = false;
-        pwm_get_duty(0, &duty[0]);
-        pwm_get_duty(1, &duty[1]);
-        pwm_get_duty(2, &duty[2]);
         if (rgb_light.state == 0)
         {
+            for (size_t i = 0; i < 3; i++)
+            {
+                pwm_get_duty(i, &duty[i]);
+                if (duty[i] != 0 && rgb_light.rgb[i] > 0)
+                {
+                    if (duty[i] >= rgb_light.rgb[i])
+                    {
+                        pwm_set_duty(i, duty[i] - rgb_light.rgb[i]);
+                    }
+                    else if (duty[i] > 0)
+                    {
+                        pwm_set_duty(i, 0);
+                    }
+                    update_pwm = true;
+                }
+                else if (duty[i] != 0 && rgb_light.rgb[i] == 0)
+                {
+                    pwm_set_duty(i, 0);
+                    update_pwm = true;
+                }
+            }
+        }
+        else if (rgb_light.state == 1)
+        {
+            for (size_t i = 0; i < 3; i++)
+            {
+                pwm_get_duty(i, &duty[i]);
+                if (duty[i] > rgb_light.rgb[i] * rgb_light.bright)
+                {
+                    if (duty[i] - (rgb_light.rgb[i] * rgb_light.bright) >= 50)
+                    {
+                        pwm_set_duty(i, duty[i] - 50);
+                    }
+                    else
+                    {
+                        pwm_set_duty(i, rgb_light.rgb[i] * rgb_light.bright);
+                    }
+                    update_pwm = true;
+                }
+                else if (duty[i] < rgb_light.rgb[i] * rgb_light.bright)
+                {
+                    if ((rgb_light.rgb[i] * rgb_light.bright) - duty[i] >= 50)
+                    {
+                        pwm_set_duty(i, duty[i] + 50);
+                    }
+                    else
+                    {
+                        pwm_set_duty(i, rgb_light.rgb[i] * rgb_light.bright);
+                    }
+                    update_pwm = true;
+                }
+            }
         }
         if (update_pwm)
         {
@@ -112,6 +159,12 @@ void csro_rgblight_on_message(esp_mqtt_event_handle_t event)
             {
                 rgb_light.bright = 10;
             }
+            if (rgb_light.rgb[0] == 0 && rgb_light.rgb[1] == 0 && rgb_light.rgb[2] == 0)
+            {
+                rgb_light.rgb[0] = 255;
+                rgb_light.rgb[1] = 255;
+                rgb_light.rgb[2] = 255;
+            }
             rgb_light.state = 1;
             update = true;
         }
@@ -122,7 +175,7 @@ void csro_rgblight_on_message(esp_mqtt_event_handle_t event)
         strncpy(payload, event->data, event->data_len);
         uint32_t data_number;
         sscanf(payload, "%d", &data_number);
-        if (data_number <= 255)
+        if (data_number <= 10)
         {
             rgb_light.bright = data_number;
             rgb_light.state = 1;
@@ -135,20 +188,13 @@ void csro_rgblight_on_message(esp_mqtt_event_handle_t event)
         strncpy(payload, event->data, event->data_len);
         uint32_t values[3];
         sscanf(payload, "%d,%d,%d", &values[0], &values[1], &values[2]);
-        if (values[0] <= 255)
+        for (size_t i = 0; i < 3; i++)
         {
-            rgb_light.red = values[0];
-            update = true;
-        }
-        if (values[1] <= 255)
-        {
-            rgb_light.green = values[1];
-            update = true;
-        }
-        if (values[2] <= 255)
-        {
-            rgb_light.blue = values[2];
-            update = true;
+            if (values[i] <= 255)
+            {
+                rgb_light.rgb[i] = values[i];
+                update = true;
+            }
         }
     }
     if (update)
