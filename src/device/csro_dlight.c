@@ -33,7 +33,6 @@ static void dlight_update_state(void)
     cJSON_AddNumberToObject(state2, "bright", dim_light[1].bright);
     cJSON_AddStringToObject(state_json, "time", sysinfo.time_str);
     cJSON_AddNumberToObject(state_json, "run", (int)(sysinfo.now - sysinfo.start));
-    cJSON_AddNumberToObject(state_json, "rssi", esp_wifi_get_ap_rssi());
     char *out = cJSON_PrintUnformatted(state_json);
     strcpy(mqttinfo.content, out);
     free(out);

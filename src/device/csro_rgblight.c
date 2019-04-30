@@ -2,9 +2,6 @@
 
 #ifdef RGBLIGHT
 
-#define RGBLIGHT_RED_PIN 15
-#define RGBLIGHT_GREEN_PIN 13
-#define RGBLIGHT_BLUE_PIN 12
 #define RGBLIGHT_PWM_PERIOD 2550
 
 #define CFG_RGBLIGHT_TOPIC "csro/light/%s_%s/config"
@@ -20,7 +17,7 @@ typedef struct
 } csro_rgb_light;
 
 csro_rgb_light rgb_light;
-const uint32_t rgb_pin[3] = {RGBLIGHT_RED_PIN, RGBLIGHT_GREEN_PIN, RGBLIGHT_BLUE_PIN};
+const uint32_t rgb_pin[3] = {15, 13, 12};
 uint32_t rgb_duties[3] = {0, 0, 0};
 int16_t rgb_phases[3] = {0, 0, 0};
 
@@ -39,7 +36,6 @@ static void rgblight_update_state(void)
     cJSON_AddItemToObject(rgbstate, "rgb", cJSON_CreateIntArray(rgb_value, 3));
     cJSON_AddStringToObject(state_json, "time", sysinfo.time_str);
     cJSON_AddNumberToObject(state_json, "run", (int)(sysinfo.now - sysinfo.start));
-    cJSON_AddNumberToObject(state_json, "rssi", esp_wifi_get_ap_rssi());
     char *out = cJSON_PrintUnformatted(state_json);
     strcpy(mqttinfo.content, out);
     free(out);

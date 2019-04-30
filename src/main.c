@@ -6,6 +6,7 @@
 
 void app_main(void)
 {
+    vTaskDelay(1000 / portTICK_RATE_MS);
     nvs_handle handle;
     nvs_flash_init();
     nvs_open("system", NVS_READWRITE, &handle);
