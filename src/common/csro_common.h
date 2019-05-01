@@ -3,6 +3,8 @@
 
 #include "esp_system.h"
 #include "FreeRTOS.h"
+#include "queue.h"
+#include "semphr.h"
 #include "event_groups.h"
 #include "esp_event_loop.h"
 #include "esp_wifi.h"
@@ -19,7 +21,7 @@
 #include "sntp\sntp.h"
 #include "time.h"
 
-#define RGBLIGHT 1
+#define AIR_SYSTEM
 
 // #define     NLIGHT               3
 // #define     DLIGHT               1

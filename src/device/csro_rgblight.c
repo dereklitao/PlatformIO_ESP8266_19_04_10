@@ -155,10 +155,6 @@ void csro_rgblight_on_message(esp_mqtt_event_handle_t event)
         }
         else if (strncmp("1", event->data, event->data_len) == 0)
         {
-            if (rgb_light.bright == 0)
-            {
-                rgb_light.bright = 10;
-            }
             if (rgb_light.rgb[0] == 0 && rgb_light.rgb[1] == 0 && rgb_light.rgb[2] == 0)
             {
                 rgb_light.rgb[0] = 255;
