@@ -102,13 +102,36 @@ static void modbus_master_read_task(void *pvParameters)
     vTaskDelete(NULL);
 }
 
+static void gpio_read(void *pvParameters)
+{
+    while (true)
+    {
+        printf("gpio 16 level = %d", gpio_get_level(GPIO_NUM_16));
+        vTaskDelay(200 / portTICK_RATE_MS);
+    }
+    vTaskDelete(NULL);
+}
+
+static void gpio_init(void)
+{
+    gpio_config_t io_conf;
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = 1ULL << 16;
+    io_conf.pull_down_en = 0;
+    io_conf.pull_up_en = 1;
+    gpio_config(&io_conf);
+}
+
 void csro_airsys_init(void)
 {
     master_mutex = xSemaphoreCreateMutex();
     write_semaphore = xSemaphoreCreateBinary();
+    gpio_init();
     modbus_master_init();
     xTaskCreate(modbus_master_read_task, "modbus_master_read_task", 2048, NULL, 5, NULL);
     xTaskCreate(modbus_master_write_task, "modbus_master_write_task", 2048, NULL, 8, NULL);
+    xTaskCreate(gpio_read, "gpio_read", 2048, NULL, 8, NULL);
 }
 void csro_airsys_on_connect(esp_mqtt_client_handle_t client)
 {

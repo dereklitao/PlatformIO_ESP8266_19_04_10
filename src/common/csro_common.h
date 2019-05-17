@@ -21,7 +21,7 @@
 #include "sntp\sntp.h"
 #include "time.h"
 
-#define AIR_SYSTEM
+#define NLIGHT 3
 
 // #define     NLIGHT               3
 // #define     DLIGHT               1

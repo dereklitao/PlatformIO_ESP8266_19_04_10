@@ -11,12 +11,14 @@ static void obtain_mqtt_server(void)
     struct ip4_addr addr;
     addr.addr = 0;
     mdns_init();
-    esp_err_t err = mdns_query_a("csro-home-server", 3000, &addr);
-    while (err != 0)
-    {
-        err = mdns_query_a("csro-home-server", 3000, &addr);
-    }
-    sprintf(mqttinfo.broker, "mqtt://%d.%d.%d.%d", ip4_addr1_16(&addr), ip4_addr2_16(&addr), ip4_addr3_16(&addr), ip4_addr4_16(&addr));
+    // esp_err_t err = mdns_query_a("csro-home-server", 3000, &addr);
+    // while (err != 0)
+    // {
+    //     err = mdns_query_a("csro-home-server", 3000, &addr);
+    // }
+    // sprintf(mqttinfo.broker, "mqtt://%d.%d.%d.%d", ip4_addr1_16(&addr), ip4_addr2_16(&addr), ip4_addr3_16(&addr), ip4_addr4_16(&addr));
+
+    sprintf(mqttinfo.broker, "mqtt://derekiot.win");
     sprintf(mqttinfo.lwt_topic, "csro/%s/%s/available", sysinfo.mac_str, sysinfo.dev_type);
 }
 

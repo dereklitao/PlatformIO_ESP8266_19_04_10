@@ -19,10 +19,12 @@ void app_main(void)
     debug("Power Count = %d\n", sysinfo.power_on_count);
     if (sysinfo.router_flag == 1)
     {
+        debug("MQTT\r\n");
         csro_start_mqtt();
     }
     else
     {
+        debug("SC\r\n");
         csro_start_smart_config();
     }
 }
